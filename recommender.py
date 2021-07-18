@@ -6,14 +6,12 @@ import pandas as pd
 import math
 import random
 import sklearn
-from nltk.corpus import stopwords
 from scipy.sparse import csr_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse.linalg import svds
 from sklearn.preprocessing import MinMaxScaler
-import matplotlib.pyplot as plt
 import re
 from popularity_recommender import PopularityRecommender
 from utils import filter_by_query
@@ -27,9 +25,11 @@ anime['genre'].fillna('', inplace=True)
 anime['type'].fillna('', inplace=True)
 anime['name'].fillna('', inplace=True)
 
+# abridging ratings so the ol' laptop can actually run it
+ratings = ratings[ratings['user_id'] <= 500]
+
 # content stuff
 watched_ratings = ratings.loc[ratings['rating'] != -1]
-watched_ratings = filter_by_query
 vectorizer = TfidfVectorizer(analyzer='word',
                              ngram_range=(1, 2),
                              min_df=0.003,
@@ -42,11 +42,9 @@ tfidf_matrix = vectorizer.fit_transform(
 tfidf_feature_names = vectorizer.get_feature_names()
 
 
-
 def get_one_item_profile(item_id):
     idx = item_ids.index(item_id)
-    item_profile = tfidf_matrix[idx:idx + 1]
-    return item_profile
+    return tfidf_matrix[idx:idx + 1]
 
 
 def get_all_item_profiles(item_ids):
@@ -56,38 +54,32 @@ def get_all_item_profiles(item_ids):
     return item_profiles
 
 
-def build_one_user_profile(user_id, ratings_indexed):
-    this_users_ratings = ratings_indexed.loc[[user_id]]
+def build_one_user_profile(user_ratings, ratings_indexed):
 
-    user_item_profiles = get_all_item_profiles(this_users_ratings['anime_id'])
+    user_item_profiles = get_all_item_profiles(user_ratings['anime_id'])
 
-    user_item_weights = np.array(this_users_ratings['rating']).reshape(-1, 1)
+    user_item_weights = np.array(user_ratings['rating']).reshape(-1, 1)
     user_items_weighted_avg = np.sum(user_item_profiles.multiply(
         user_item_weights), axis=0) / np.sum(user_item_weights)
 
-    user_profile_normalised = sklearn.preprocessing.normalize(
+    return sklearn.preprocessing.normalize(
         user_items_weighted_avg)
-    return user_profile_normalised
 
 
 def build_all_user_profiles():
     ratings_indexed = watched_ratings[watched_ratings['anime_id'].isin(
         anime['anime_id'])].set_index('user_id')
-    user_profiles = {}
-
-    for user_id in ratings_indexed.index.unique():
-        user_profiles[user_id] = build_one_user_profile(
-            user_id, ratings_indexed)
-    return user_profiles
+    print(len(ratings_indexed.index.unique()))
+    return {
+        user_id: build_one_user_profile(ratings_indexed[ratings_indexed.index == user_id], ratings_indexed)
+        for user_id in ratings_indexed.index.unique()
+    }
 
 
 user_profiles = build_all_user_profiles()
-print(user_profiles)
 print(pd.DataFrame(sorted(zip(tfidf_feature_names,
-                        user_profiles[-1].flatten().tolist()), key=lambda x: -x[1])[:20],
-             columns=['token', 'relevance']))
-
-
+                              user_profiles[1].flatten().tolist()), key=lambda x: -x[1])[:20],
+                   columns=['token', 'relevance']))
 
 
 class ContentRecommender:
