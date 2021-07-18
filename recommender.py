@@ -45,8 +45,7 @@ tfidf_feature_names = vectorizer.get_feature_names()
 
 def get_one_item_profile(item_id):
     idx = item_ids.index(item_id)
-    item_profile = tfidf_matrix[idx:idx + 1]
-    return item_profile
+    return tfidf_matrix[idx:idx + 1]
 
 
 def get_all_item_profiles(item_ids):
@@ -65,20 +64,17 @@ def build_one_user_profile(user_id, ratings_indexed):
     user_items_weighted_avg = np.sum(user_item_profiles.multiply(
         user_item_weights), axis=0) / np.sum(user_item_weights)
 
-    user_profile_normalised = sklearn.preprocessing.normalize(
+    return sklearn.preprocessing.normalize(
         user_items_weighted_avg)
-    return user_profile_normalised
 
 
 def build_all_user_profiles():
     ratings_indexed = watched_ratings[watched_ratings['anime_id'].isin(
         anime['anime_id'])].set_index('user_id')
-    user_profiles = {}
-
-    for user_id in ratings_indexed.index.unique():
-        user_profiles[user_id] = build_one_user_profile(
-            user_id, ratings_indexed)
-    return user_profiles
+    return {
+        user_id: build_one_user_profile(user_id, ratings_indexed)
+        for user_id in ratings_indexed.index.unique()
+    }
 
 
 user_profiles = build_all_user_profiles()
