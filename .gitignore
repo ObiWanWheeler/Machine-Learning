@@ -1,0 +1,4 @@
+# contains GIRTHY csv files, no need to upload
+data
+# ide stuff
+__pycache__
