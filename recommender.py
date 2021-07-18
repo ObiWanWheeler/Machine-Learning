@@ -81,11 +81,11 @@ def build_all_user_profiles():
     return user_profiles
 
 
-# user_profiles = build_all_user_profiles()
-# print(user_profiles)
-# print(pd.DataFrame(sorted(zip(tfidf_feature_names,
-#                         user_profiles[-1].flatten().tolist()), key=lambda x: -x[1])[:20],
-#              columns=['token', 'relevance']))
+user_profiles = build_all_user_profiles()
+print(user_profiles)
+print(pd.DataFrame(sorted(zip(tfidf_feature_names,
+                        user_profiles[-1].flatten().tolist()), key=lambda x: -x[1])[:20],
+             columns=['token', 'relevance']))
 
 
 
