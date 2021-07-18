@@ -29,7 +29,7 @@ anime['name'].fillna('', inplace=True)
 
 # content stuff
 watched_ratings = ratings.loc[ratings['rating'] != -1]
-
+watched_ratings = filter_by_query
 vectorizer = TfidfVectorizer(analyzer='word',
                              ngram_range=(1, 2),
                              min_df=0.003,
