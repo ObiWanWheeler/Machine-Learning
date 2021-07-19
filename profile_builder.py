@@ -4,9 +4,12 @@ import numpy as np
 
 class ProfileBuilder:
 
-    def __init__(self, items_df, all_item_ids, ratings_df, tfidf_matrix) -> None:
+    def __init__(self, items_df, all_item_ids, user_id_column, item_id_column, rating_column, ratings_df, tfidf_matrix) -> None:
         self.items_df = items_df
         self.all_item_ids = all_item_ids
+        self.user_id_column = user_id_column
+        self.item_id_column = item_id_column
+        self.rating_column = rating_column
         self.ratings_df = ratings_df
         self.tfidf_matrix = tfidf_matrix
 
@@ -22,9 +25,9 @@ class ProfileBuilder:
 
     def build_one_user_profile(self, user_ratings):
 
-        user_item_profiles = self.get_all_item_profiles(user_ratings['anime_id'])
+        user_item_profiles = self.get_all_item_profiles(user_ratings[self.item_id_column])
 
-        user_item_weights = np.array(user_ratings['rating']).reshape(-1, 1)
+        user_item_weights = np.array(user_ratings[self.rating_column]).reshape(-1, 1)
         user_items_weighted_avg = np.sum(user_item_profiles.multiply(
             user_item_weights), axis=0) / np.sum(user_item_weights)
 
@@ -32,8 +35,8 @@ class ProfileBuilder:
             user_items_weighted_avg)
 
     def build_all_user_profiles(self):
-        ratings_indexed = self.ratings_df[self.ratings_df['anime_id'].isin(
-            self.items_df['anime_id'])].set_index('user_id')
+        ratings_indexed = self.ratings_df[self.ratings_df[self.item_id_column].isin(
+            self.items_df[self.item_id_column])].set_index(self.user_id_column)
 
         return {
             user_id: self.build_one_user_profile(ratings_indexed[ratings_indexed.index == user_id])

@@ -15,14 +15,14 @@ class ContentRecommender:
             key=lambda x: -x[1],
         )
 
-    def give_recommendation(self, user_profile, tfidf_matrix, item_ids, items_df=None, items_to_ignore=[], topn=10):
+    def give_recommendation(self, user_profile, tfidf_matrix, item_ids, item_id_column, items_df=None, items_to_ignore=[], topn=10):
         similar_items = self.get_similar_items_ids(user_profile, tfidf_matrix, item_ids, topn)
         similar_items_filtered = list(filter(lambda x: x[0] not in items_to_ignore, similar_items))
 
-        recommendations = DataFrame(similar_items_filtered, columns=['anime_id', 'relevance'])
+        recommendations = DataFrame(similar_items_filtered, columns=[item_id_column, 'relevance'])
 
         if items_df is not None:
-            recommendations = recommendations.merge(items_df, how='left', left_on='anime_id', right_on='anime_id')
+            recommendations = recommendations.merge(items_df, how='left', left_on=item_id_column, right_on=item_id_column)
         
         return recommendations
 

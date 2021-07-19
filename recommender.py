@@ -31,12 +31,12 @@ watched_ratings = ratings.loc[ratings['rating'] != -1]
 #     re.search(r'Action|Adventure', x, re.IGNORECASE)), anime)
 # print(f'Most popular Action / Adventure anime:\n {pr.give_recommendation(action_or_adventure_anime, 10)}')
 
-# pb = ProfileBuilder(anime, item_ids, watched_ratings, tfidf_matrix)
+# pb = ProfileBuilder(anime, item_ids, 'user_id', 'anime_id', 'rating' ,watched_ratings, tfidf_matrix)
 # user_profiles = pb.build_all_user_profiles()
 # print(pd.DataFrame(sorted(zip(tfidf_feature_names,
 #                               user_profiles[1].flatten().tolist()), key=lambda x: -x[1])[:20],
 #                    columns=['token', 'relevance']))
 # print(len(user_profiles))
 # cr = ContentRecommender()
-# recs = cr.give_recommendation(user_profiles[1], tfidf_matrix, item_ids, anime)
+# recs = cr.give_recommendation(user_profiles[1], tfidf_matrix, item_ids, 'anime_id', anime)
 # print(recs)
