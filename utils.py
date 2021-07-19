@@ -1,5 +1,6 @@
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 def calculate_popularity_stats(df: DataFrame):
@@ -10,6 +11,20 @@ def calculate_popularity_stats(df: DataFrame):
 
 def filter_by_query(column, condition, df: DataFrame) -> DataFrame:
     return df.copy().loc[[condition(x) for x in df[f'{column}']]]
+
+
+def calculate_tfidf_matrix(df: DataFrame):
+    vectorizer = TfidfVectorizer(analyzer='word',
+                             ngram_range=(1, 2),
+                             min_df=0.003,
+                             max_df=0.5,
+                             max_features=5000,
+                             stop_words='english')
+    tfidf_matrix = vectorizer.fit_transform(
+        df['name'] + "" + df['genre'] + "" + df['type'])
+    tfidf_feature_names = vectorizer.get_feature_names()
+
+    return (tfidf_feature_names, tfidf_matrix)
 
 
 def weight_rating(column: Series, min_vote_count, overall_vote_average):

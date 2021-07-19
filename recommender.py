@@ -14,7 +14,10 @@ from scipy.sparse.linalg import svds
 from sklearn.preprocessing import MinMaxScaler
 import re
 from popularity_recommender import PopularityRecommender
-from utils import filter_by_query
+from utils import filter_by_query, calculate_tfidf_matrix
+from profile_builder import ProfileBuilder
+from content_recommender import ContentRecommender
+
 
 # data sets
 anime = pd.read_csv("./data/anime/anime.csv", low_memory=False)
@@ -29,71 +32,24 @@ anime['name'].fillna('', inplace=True)
 ratings = ratings[ratings['user_id'] <= 500]
 
 # content stuff
-watched_ratings = ratings.loc[ratings['rating'] != -1]
-vectorizer = TfidfVectorizer(analyzer='word',
-                             ngram_range=(1, 2),
-                             min_df=0.003,
-                             max_df=0.5,
-                             max_features=5000,
-                             stop_words='english')
 item_ids = anime['anime_id'].tolist()
-tfidf_matrix = vectorizer.fit_transform(
-    anime['name'] + "" + anime['genre'] + "" + anime['type'])
-tfidf_feature_names = vectorizer.get_feature_names()
+tfidf_feature_names, tfidf_matrix = calculate_tfidf_matrix(anime)
+
+watched_ratings = ratings.loc[ratings['rating'] != -1]
 
 
-def get_one_item_profile(item_id):
-    idx = item_ids.index(item_id)
-    return tfidf_matrix[idx:idx + 1]
+# pr = PopularityRecommender()
+# print(pr.give_recommendation(anime, 10))
 
+# action_or_adventure_anime = filter_by_query('genre', lambda x: bool(
+#     re.search(r'Action|Adventure', x, re.IGNORECASE)), anime)
+# print(action_or_adventure_anime.head(10))
 
-def get_all_item_profiles(item_ids):
-
-    item_profiles = [get_one_item_profile(id) for id in item_ids]
-    item_profiles = scipy.sparse.vstack(item_profiles)
-    return item_profiles
-
-
-def build_one_user_profile(user_ratings, ratings_indexed):
-
-    user_item_profiles = get_all_item_profiles(user_ratings['anime_id'])
-
-    user_item_weights = np.array(user_ratings['rating']).reshape(-1, 1)
-    user_items_weighted_avg = np.sum(user_item_profiles.multiply(
-        user_item_weights), axis=0) / np.sum(user_item_weights)
-
-    return sklearn.preprocessing.normalize(
-        user_items_weighted_avg)
-
-
-def build_all_user_profiles():
-    ratings_indexed = watched_ratings[watched_ratings['anime_id'].isin(
-        anime['anime_id'])].set_index('user_id')
-    print(len(ratings_indexed.index.unique()))
-    return {
-        user_id: build_one_user_profile(ratings_indexed[ratings_indexed.index == user_id], ratings_indexed)
-        for user_id in ratings_indexed.index.unique()
-    }
-
-
-user_profiles = build_all_user_profiles()
+pb = ProfileBuilder(anime, item_ids, watched_ratings, tfidf_matrix)
+user_profiles = pb.build_all_user_profiles()
 print(pd.DataFrame(sorted(zip(tfidf_feature_names,
-                              user_profiles[1].flatten().tolist()), key=lambda x: -x[1])[:20],
+                              user_profiles[2].flatten().tolist()), key=lambda x: -x[1])[:20],
                    columns=['token', 'relevance']))
-
-
-class ContentRecommender:
-
-    def __init__(self, df) -> None:
-        self.df = df
-
-    def give_recommendation(self, topn):
-        next
-
-
-pr = PopularityRecommender()
-print(pr.give_recommendation(anime, 10))
-
-action_or_adventure_anime = filter_by_query('genre', lambda x: bool(
-    re.search(r'Action|Adventure', x, re.IGNORECASE)), anime)
-print(action_or_adventure_anime.head(10))
+cr = ContentRecommender()
+recs = cr.give_recommendation(user_profiles[2], tfidf_matrix, item_ids, anime)
+print(recs)
