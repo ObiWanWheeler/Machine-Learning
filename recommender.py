@@ -1,31 +1,21 @@
 import pandas as pd
-import re
-import numpy as np
-from pandas.core.frame import DataFrame
-from content_recommender import ContentRecommender
-from popularity_recommender import PopularityRecommender
-from profile_builder import ProfileBuilder
-from utils import calculate_tfidf_matrix, filter_by_query
-from scipy.sparse.linalg import svds
-from collaborative_recommender import CollabRecommender
+from data import anime, ratings
 
-# data sets
-anime = pd.read_csv("./data/anime/anime.csv", low_memory=False)
-ratings = pd.read_csv("./data/anime/rating.csv", low_memory=False)
+def learn_new_user_preferences_test():
+    abrev_anime = anime[anime['anime_id'] <= 10]
+    abrev_ratings = ratings[ratings['user_id'] <= 10]
 
-# data cleaning
-anime['genre'].fillna('', inplace=True)
-anime['type'].fillna('', inplace=True)
-anime['name'].fillna('', inplace=True)
+    abrev_ratings.to_csv('./data/anime/ratings_abrev.csv', index=False)
 
-# abridging ratings so the ol' laptop can actually run it
-ratings = ratings[ratings['user_id'] <= 1000]
+    new_user_id = abrev_ratings['user_id'].max() + 1
+    user_ratings = []
+    for anime_id in abrev_anime['anime_id']:
+        print(anime.iloc[anime_id][['name', 'genre', 'type', 'episodes']])
+        user_rating = input("give a rating from 0 to 10, or -1 if you haven't seen it:\n")
+        user_ratings.append({'user_id': new_user_id, 'anime_id': anime_id, 'rating': user_rating})
 
-# content stuff
-item_ids = anime['anime_id'].tolist()
-tfidf_feature_names, tfidf_matrix = calculate_tfidf_matrix(anime)
-
-watched_ratings = ratings.loc[ratings['rating'] != -1]
+    abrev_ratings = abrev_ratings.append(user_ratings, ignore_index=True)
+    abrev_ratings.to_csv('./data/anime/ratings_abrev2.csv', index=False)
 
 
-
+learn_new_user_preferences_test()
