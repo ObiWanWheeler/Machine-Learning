@@ -6,6 +6,7 @@ from content_recommender import ContentRecommender
 from collaborative_recommender import CollabRecommender
 from profile_builder import ProfileBuilder
 from data import anime, ratings
+from hybrid_recommender import HybridRecommender
 
 # data
 print(ratings.head())
@@ -48,13 +49,17 @@ print(pd.DataFrame(sorted(zip(tfidf_feature_names,
                    columns=['token', 'relevance']), '\n')
 
 print('Content based recommendations for user 1: \n')
-cr = ContentRecommender()
-recs = cr.give_recommendation(
-    user_profiles[1], tfidf_matrix, item_ids, 'anime_id', anime)
+cr = ContentRecommender(user_profiles, tfidf_matrix, item_ids)
+recs = cr.give_recommendation(1, 'anime_id', anime, verbose=True)
 print(recs, '\n'*3)
 
 # collab recommender (most individually accurate)
-colr = CollabRecommender(watched_ratings, anime,
+colr = CollabRecommender(watched_ratings,
                          'user_id', 'anime_id', 'rating')
 print('Collab based recommendations for user 1: \n')
-print(colr.give_recommendations(user_id=1, verbose=True))
+print(colr.give_recommendations(user_id=1, items_df=anime, verbose=True), '\n'*5)
+
+# hybrid recommender (most accurate)
+print('Hybrid recommendations for user 1: \n')
+hr = HybridRecommender(cr, colr, {'content': 1.0, 'collab': 10.0})
+print(hr.give_recommendations(user_id=1, items_df=anime, topn=10, verbose=True))

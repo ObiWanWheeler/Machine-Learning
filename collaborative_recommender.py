@@ -5,9 +5,8 @@ from scipy.sparse.linalg import svds
 # one instance per data set
 class CollabRecommender:
 
-    def __init__(self, ratings_df, items_df, user_id_column, item_id_column, rating_column) -> None:
+    def __init__(self, ratings_df, user_id_column, item_id_column, rating_column) -> None:
         self.ratings_df = ratings_df
-        self.items_df = items_df
 
         self.user_id_column = user_id_column
         self.item_id_column = item_id_column
@@ -37,7 +36,7 @@ class CollabRecommender:
         self.predictions_df = pd.DataFrame(predictions_matrix, columns=self.user_ratings.columns)
     
     
-    def give_recommendations(self, user_id, topn=10, verbose=False):
+    def give_recommendations(self, user_id, items_df, topn=10, verbose=False):
         user_id = user_id - 1
         user_predictions = self.predictions_df.iloc[user_id].sort_values(
             ascending=False).reset_index().rename(columns={user_id: 'relevance'})
@@ -48,6 +47,9 @@ class CollabRecommender:
             user_ratings[self.item_id_column])].sort_values(by='relevance', ascending=False).head(topn)
 
         if verbose:
-            recommendations = recommendations.merge(self.items_df, how='left', left_on=self.item_id_column, right_on=self.item_id_column)
+            if items_df is not None:
+                recommendations = recommendations.merge(items_df, how='left', left_on=self.item_id_column, right_on=self.item_id_column)
+            else:
+                raise Exception('items_df must not be none to use verbose mode')
 
         return recommendations
