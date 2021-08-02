@@ -1,12 +1,12 @@
 import re
 from utils import *
 import pandas as pd
-from popularity_recommender import PopularityRecommender
-from content_recommender import ContentRecommender
-from collaborative_recommender import CollabRecommender
+from recommenders.popularity_recommender import PopularityRecommender
+from recommenders.content_recommender import ContentRecommender
+from recommenders.collaborative_recommender import CollabRecommender
+from recommenders.hybrid_recommender import HybridRecommender
 from profile_builder import ProfileBuilder
-from data import anime, ratings
-from hybrid_recommender import HybridRecommender
+from experimenting.csv_processes import anime, ratings
 
 # data
 print(ratings.head())
@@ -56,6 +56,6 @@ print('Collab based recommendations for user 1: \n')
 print(colr.give_recommendations(user_id=1, items_df=anime, verbose=True), '\n'*5)
 
 # hybrid recommender (most accurate)
-print('Hybrid recommendations for user 1: \n')
+print('Hybrid recommendations for user 73517: \n')
 hr = HybridRecommender(cr, colr, {'content': 1.0, 'collab': 10.0})
-print(hr.give_recommendations(user_id=1, items_df=anime, topn=10, verbose=True))
+print(hr.give_recommendations(user_id=73517, items_df=anime, topn=10, verbose=True))

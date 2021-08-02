@@ -71,6 +71,6 @@ def populate_tables(connection):
 
 
 
-connection = data.get_connection()
-data.create_tables(connection)
-data.populate_tables(connection)
+# connection = data.get_connection()
+# create_tables(connection)
+# populate_tables(connection)

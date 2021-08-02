@@ -5,7 +5,7 @@ from scipy.sparse.linalg import svds
 # one instance per data set
 class CollabRecommender:
 
-    def __init__(self, ratings_df, user_id_column, item_id_column, rating_column) -> None:
+    def __init__(self, ratings_df: pd.DataFrame, user_id_column, item_id_column, rating_column) -> None:
         self.ratings_df = ratings_df
 
         self.user_id_column = user_id_column
@@ -21,8 +21,9 @@ class CollabRecommender:
         self.produce_predictions()
 
     def prep_data(self):
-        self.user_ratings = self.ratings_df.pivot(
-            index=self.user_id_column, columns=self.item_id_column, values=self.rating_column).fillna(0)
+        #self.user_ratings = self.ratings_df.pivot_table(
+        #    index=self.user_id_column, columns=self.item_id_column, values=self.rating_column, aggfunc=np.mean).fillna(0)
+        self.user_ratings = self.ratings_df.groupby([self.user_id_column, self.item_id_column])[self.rating_column].mean().unstack()
         self.user_ratings_matrix = self.user_ratings.to_numpy()
         self.user_ratings_means = np.mean(self.user_ratings_matrix, axis=1)
         self.user_ratings_demeaned = self.user_ratings_matrix - \
