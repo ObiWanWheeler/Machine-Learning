@@ -2,3 +2,4 @@
 data
 # ide stuff
 __pycache__
+.venv
