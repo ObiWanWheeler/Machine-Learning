@@ -11,10 +11,6 @@ from hybrid_recommender import HybridRecommender
 # data
 print(ratings.head())
 
-# data cleaning
-anime['genre'].fillna('', inplace=True)
-anime['type'].fillna('', inplace=True)
-anime['name'].fillna('', inplace=True)
 
 # abridging ratings so the ol' laptop can actually run it
 ratings = ratings[ratings['user_id'] <= 1000]

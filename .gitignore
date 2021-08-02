@@ -3,3 +3,5 @@ data
 # ide stuff
 __pycache__
 .venv
+# postgres stuff
+database.ini
