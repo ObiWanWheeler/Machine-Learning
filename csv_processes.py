@@ -13,10 +13,13 @@ ratings = pd.read_csv("./data/anime/rating.csv", low_memory=False)
 # data cleaning
 anime['genre'].fillna('Unkown', inplace=True)
 anime['type'].fillna('Unknown', inplace=True)
-anime['name'].dropna()
+anime['name'].dropna(inplace=True)
 anime['episodes'].replace('Unknown', -1, inplace=True)
 anime['episodes'].fillna(-2, inplace=True)
 anime['rating'].fillna(0.0, inplace=True)
+
+ratings = ratings[ratings['anime_id'].isin(anime['anime_id'])]
+ratings = ratings[ratings['user_id'] <= 20000]
 
 
 # the following functions should only be used on systems that have cloned this repository 
@@ -55,6 +58,7 @@ def create_tables(connection):
             connection.commit()
         except (psycopg2.DatabaseError, Exception) as error:
             print(error)
+            continue
     cursor.close()
     
 
@@ -70,7 +74,6 @@ def populate_tables(connection):
     cursor.close()
 
 
-
-# connection = data.get_connection()
-# create_tables(connection)
-# populate_tables(connection)
+connection = data.get_connection()
+create_tables(connection)
+populate_tables(connection)

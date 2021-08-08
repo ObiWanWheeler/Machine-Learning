@@ -29,6 +29,7 @@ def learn_new_user_preferences_db(connection):
         execute_values(cur, "INSERT INTO rating (user_id, anime_id, rating) VALUES %s", user_ratings)
         print(f'ratings added, your user ID is {new_user_id}')
     connection.commit()
+    return new_user_id
 
         
 

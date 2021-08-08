@@ -1,8 +1,11 @@
+from utils import chunk_dataframe
 import numpy as np
 import pandas as pd
 from scipy.sparse.linalg import svds
 
 # one instance per data set
+
+
 class CollabRecommender:
 
     def __init__(self, ratings_df: pd.DataFrame, user_id_column, item_id_column, rating_column) -> None:
@@ -15,15 +18,24 @@ class CollabRecommender:
         self.user_ratings: pd.DataFrame
         self.user_ratings_means: np.ndarray
         self.user_ratings_demeaned: np.ndarray
-        self.predections_df: pd.DataFrame
+        self.predictions_df: pd.DataFrame
 
         self.prep_data()
         self.produce_predictions()
 
     def prep_data(self):
-        #self.user_ratings = self.ratings_df.pivot_table(
-        #    index=self.user_id_column, columns=self.item_id_column, values=self.rating_column, aggfunc=np.mean).fillna(0)
-        self.user_ratings = self.ratings_df.groupby([self.user_id_column, self.item_id_column])[self.rating_column].mean().unstack()
+        pivoted_ratings = [
+            chunk.pivot_table(
+                index=self.user_id_column,
+                columns=self.item_id_column,
+                values=self.rating_column,
+                aggfunc=np.mean,
+            )
+            for chunk in chunk_dataframe(self.ratings_df, chunk_size=10**6)
+        ]
+        self.user_ratings = pd.concat(pivoted_ratings).fillna(0.0)
+        print(len(self.user_ratings.isna()))
+
         self.user_ratings_matrix = self.user_ratings.to_numpy()
         self.user_ratings_means = np.mean(self.user_ratings_matrix, axis=1)
         self.user_ratings_demeaned = self.user_ratings_matrix - \
@@ -34,23 +46,25 @@ class CollabRecommender:
         sigma = np.diag(sigma)
         predictions_matrix = np.dot(np.dot(u, sigma), vt) + \
             self.user_ratings_means.reshape(-1, 1)
-        self.predictions_df = pd.DataFrame(predictions_matrix, columns=self.user_ratings.columns)
-    
-    
+        self.predictions_df = pd.DataFrame(
+            predictions_matrix, columns=self.user_ratings.columns)
+
     def give_recommendations(self, user_id, items_df, topn=10, verbose=False):
         user_id = user_id - 1
         user_predictions = self.predictions_df.iloc[user_id].sort_values(
             ascending=False).reset_index().rename(columns={user_id: 'relevance'})
 
-        user_ratings = self.ratings_df[self.ratings_df[self.user_id_column] == user_id]
-
+        current_user_ratings = self.ratings_df[self.ratings_df[self.user_id_column] == user_id]
+        print(current_user_ratings.columns)
         recommendations = user_predictions[~user_predictions[self.item_id_column].isin(
-            user_ratings[self.item_id_column])].sort_values(by='relevance', ascending=False).head(topn)
+            current_user_ratings[self.item_id_column])].sort_values(by='relevance', ascending=False).head(topn)
 
         if verbose:
             if items_df is not None:
-                recommendations = recommendations.merge(items_df, how='left', left_on=self.item_id_column, right_on=self.item_id_column)
+                recommendations = recommendations.merge(
+                    items_df, how='left', left_on=self.item_id_column, right_on=self.item_id_column)
             else:
-                raise Exception('items_df must not be none to use verbose mode')
+                raise Exception(
+                    'items_df must not be none to use verbose mode')
 
         return recommendations

@@ -32,3 +32,7 @@ def weight_rating(column: Series, min_vote_count, overall_vote_average):
     rating = column['rating']
     # IMDB weighting formula
     return (vote_count/(vote_count + min_vote_count) * rating + min_vote_count/(vote_count + min_vote_count) * overall_vote_average)
+
+
+def chunk_dataframe(df, chunk_size):
+    return [df[i:i+chunk_size] for i in range(0, df.shape[0], chunk_size)]
