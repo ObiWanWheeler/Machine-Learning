@@ -11,6 +11,7 @@ class ProfileBuilder:
         self.item_id_column = item_id_column
         self.rating_column = rating_column
         self.ratings_df = ratings_df
+        self.ratings_df[self.ratings_df['rating'] < 0]['rating'] = 0
         self.tfidf_matrix = tfidf_matrix
 
     def get_one_item_profile(self, item_id):
@@ -24,12 +25,17 @@ class ProfileBuilder:
         return item_profiles
 
     def build_one_user_profile(self, user_ratings):
-
+        
         user_item_profiles = self.get_all_item_profiles(user_ratings[self.item_id_column])
 
         user_item_weights = np.array(user_ratings[self.rating_column]).reshape(-1, 1)
+        weight_sum = np.sum(user_item_weights)
+
         user_items_weighted_avg = np.sum(user_item_profiles.multiply(
-            user_item_weights), axis=0) / np.sum(user_item_weights)
+            user_item_weights), axis=0)
+
+        if weight_sum != 0:
+            user_items_weighted_avg /= weight_sum
 
         return sklearn.preprocessing.normalize(
             user_items_weighted_avg)

@@ -19,7 +19,6 @@ anime['episodes'].fillna(-2, inplace=True)
 anime['rating'].fillna(0.0, inplace=True)
 
 ratings = ratings[ratings['anime_id'].isin(anime['anime_id'])]
-ratings = ratings[ratings['user_id'] <= 20000]
 
 
 # the following functions should only be used on systems that have cloned this repository 
@@ -42,7 +41,7 @@ def create_tables(connection):
         CREATE TABLE rating (
             user_id integer NOT NULL,  
             anime_id integer NOT NULL,
-            rating integer NOT NULL CHECK (rating >= -1 AND rating <= 10),
+            rating integer NOT NULL CHECK (rating >= 0 AND rating <= 10),
             CONSTRAINT fk_anime
                 FOREIGN KEY(anime_id)
                     REFERENCES anime(anime_id)
@@ -74,6 +73,6 @@ def populate_tables(connection):
     cursor.close()
 
 
-connection = data.get_connection()
-create_tables(connection)
-populate_tables(connection)
+# connection = data.get_connection()
+# create_tables(connection)
+# populate_tables(connection)

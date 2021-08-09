@@ -5,7 +5,7 @@ def input_user_ratings(anime_df, id):
     user_ratings = []
     for anime_id in anime_df['anime_id']:
         print(anime_df[anime_df['anime_id'] == anime_id][['name', 'genre', 'type', 'episodes']], "\n")
-        user_rating = input("give a rating from 0 to 10, or -1 if you haven't seen it:\n")
+        user_rating = input("give a rating from 1 to 10, or 0 if you haven't seen it:\n")
         user_ratings.append([id, anime_id, user_rating])
 
         if input('leave another review? y/n: ') == 'n':

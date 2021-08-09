@@ -5,15 +5,12 @@ from recommenders.popularity_recommender import PopularityRecommender
 from recommenders.content_recommender import ContentRecommender
 from recommenders.collaborative_recommender import CollabRecommender
 from recommenders.hybrid_recommender import HybridRecommender
-from profile_builder import ProfileBuilder
+from recommenders.profile_builder import ProfileBuilder
 from csv_processes import anime, ratings
 
 # data
 print(ratings.head())
 
-
-# abridging ratings so the ol' laptop can actually run it
-ratings = ratings[ratings['user_id'] <= 1000]
 
 # content stuff
 item_ids = anime['anime_id'].tolist()
@@ -39,23 +36,23 @@ print(
 pb = ProfileBuilder(anime, item_ids, 'user_id', 'anime_id',
                     'rating', watched_ratings, tfidf_matrix)
 user_profiles = pb.build_all_user_profiles()
-print('Perceived preferences of user 1: \n')
+print('Perceived preferences of user 20002: \n')
 print(pd.DataFrame(sorted(zip(tfidf_feature_names,
-                              user_profiles[1].flatten().tolist()), key=lambda x: -x[1])[:20],
+                              user_profiles[20001].flatten().tolist()), key=lambda x: -x[1])[:20],
                    columns=['token', 'relevance']), '\n')
 
-print('Content based recommendations for user 1: \n')
+print('Content based recommendations for user 20002: \n')
 cr = ContentRecommender(user_profiles, tfidf_matrix, item_ids)
-recs = cr.give_recommendation(1, 'anime_id', anime, verbose=True)
+recs = cr.give_recommendation(20002, 'anime_id', anime, verbose=True)
 print(recs, '\n'*3)
 
 # collab recommender (most individually accurate)
 colr = CollabRecommender(watched_ratings,
                          'user_id', 'anime_id', 'rating')
-print('Collab based recommendations for user 1: \n')
-print(colr.give_recommendations(user_id=1, items_df=anime, verbose=True), '\n'*5)
+print('Collab based recommendations for user 20002: \n')
+print(colr.give_recommendations(user_id=20002, items_df=anime, verbose=True), '\n'*5)
 
 # hybrid recommender (most accurate)
-print('Hybrid recommendations for user 73517: \n')
+print('Hybrid recommendations for user 20002: \n')
 hr = HybridRecommender(cr, colr, 'anime_id', {'content': 1.0, 'collab': 10.0})
-print(hr.give_recommendations(user_id=1, items_df=anime, topn=10, verbose=True))
+print(hr.give_recommendations(user_id=20002, items_df=anime, topn=10, verbose=True))

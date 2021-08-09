@@ -15,6 +15,7 @@ class CollabRecommender:
         self.item_id_column = item_id_column
         self.rating_column = rating_column
 
+        self.user_ids: pd.Series
         self.user_ratings: pd.DataFrame
         self.user_ratings_means: np.ndarray
         self.user_ratings_demeaned: np.ndarray
@@ -24,20 +25,40 @@ class CollabRecommender:
         self.produce_predictions()
 
     def prep_data(self):
-        pivoted_ratings = [
-            chunk.pivot_table(
-                index=self.user_id_column,
+        # pivoted_ratings = self.ratings_df.pivot_table(index=self.user_id_column,
+        #         columns=self.item_id_column,
+        #         values=self.rating_column,
+        #         fill_value=0,
+        #         aggfunc=np.mean)
+
+        # [                                                         Chunking
+        #     chunk.pivot_table(
+        #         index=self.user_id_column,
+        #         columns=self.item_id_column,
+        #         values=self.rating_column,
+        #         fill_value=0,
+        #         aggfunc=np.mean
+        #     )
+        #     for chunk in chunk_dataframe(self.ratings_df, chunk_size=10**6)
+        # ]
+
+        # for c in pivoted_ratings:
+        #     print(c)
+
+        # self.user_ratings = pd.concat(pivoted_ratings).fillna(0)
+
+        self.user_ratings = self.ratings_df.pivot_table(index=self.user_id_column,
                 columns=self.item_id_column,
                 values=self.rating_column,
-                aggfunc=np.mean,
-            )
-            for chunk in chunk_dataframe(self.ratings_df, chunk_size=10**6)
-        ]
-        self.user_ratings = pd.concat(pivoted_ratings).fillna(0.0)
-        print(len(self.user_ratings.isna()))
+                fill_value=0,
+                aggfunc=np.mean)
+        # print(self.user_ratings)
+        # print(self.user_ratings.shape)
+        # print(self.user_ratings.index)
+        self.user_ids = self.user_ratings.index
 
         self.user_ratings_matrix = self.user_ratings.to_numpy()
-        self.user_ratings_means = np.mean(self.user_ratings_matrix, axis=1)
+        self.user_ratings_means = np.mean(self.user_ratings_matrix, axis=1) 
         self.user_ratings_demeaned = self.user_ratings_matrix - \
             self.user_ratings_means.reshape(-1, 1)
 
@@ -47,17 +68,16 @@ class CollabRecommender:
         predictions_matrix = np.dot(np.dot(u, sigma), vt) + \
             self.user_ratings_means.reshape(-1, 1)
         self.predictions_df = pd.DataFrame(
-            predictions_matrix, columns=self.user_ratings.columns)
+            predictions_matrix, index=self.user_ids, columns=self.user_ratings.columns)
 
-    def give_recommendations(self, user_id, items_df, topn=10, verbose=False):
-        user_id = user_id - 1
-        user_predictions = self.predictions_df.iloc[user_id].sort_values(
+    def give_recommendations(self, user_id, items_df, topn=10, verbose=False, items_to_ignore=[]):
+        print(self.predictions_df)
+        user_predictions = self.predictions_df.loc[user_id].sort_values(
             ascending=False).reset_index().rename(columns={user_id: 'relevance'})
 
-        current_user_ratings = self.ratings_df[self.ratings_df[self.user_id_column] == user_id]
-        print(current_user_ratings.columns)
+        # print(current_user_ratings.columns)
         recommendations = user_predictions[~user_predictions[self.item_id_column].isin(
-            current_user_ratings[self.item_id_column])].sort_values(by='relevance', ascending=False).head(topn)
+            items_to_ignore)].sort_values(by='relevance', ascending=False).head(topn)
 
         if verbose:
             if items_df is not None:
