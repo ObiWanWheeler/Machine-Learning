@@ -52,9 +52,7 @@ class CollabRecommender:
                 values=self.rating_column,
                 fill_value=0,
                 aggfunc=np.mean)
-        # print(self.user_ratings)
-        # print(self.user_ratings.shape)
-        # print(self.user_ratings.index)
+
         self.user_ids = self.user_ratings.index
 
         self.user_ratings_matrix = self.user_ratings.to_numpy()
@@ -71,7 +69,6 @@ class CollabRecommender:
             predictions_matrix, index=self.user_ids, columns=self.user_ratings.columns)
 
     def give_recommendations(self, user_id, items_df, topn=10, verbose=False, items_to_ignore=[]):
-        print(self.predictions_df)
         user_predictions = self.predictions_df.loc[user_id].sort_values(
             ascending=False).reset_index().rename(columns={user_id: 'relevance'})
 
