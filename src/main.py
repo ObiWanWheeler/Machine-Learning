@@ -55,10 +55,11 @@ def index():
 
 
 def recommender_route(user_id, recommendation_func):
-    # walrus operator code donated by github.com/Not_Anonymous33
-    if (topn := request.args.get('topn')) is None:
-        topn = DEFAULT_TOPN
-    if (verbose := request.args.get('verbose')) is None:
+    topn = request.args.get('topn')
+    if topn is None:
+        topn = 10
+    verbose = request.args.get('verbose')
+    if verbose is None:
         verbose = False
 
     items_to_ignore = list(
