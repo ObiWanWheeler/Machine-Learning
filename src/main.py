@@ -49,14 +49,12 @@ hybrid_r = HybridRecommender(content_r, collab_r, 'anime_id', {
     'content': 1.0, 'collab': DEFAULT_COLLAB_WEIGHT})
 
 
-
 @app.route('/')
 def index():
     return "Welcome to the film recommender API"
 
 
-@app.route('/content-recommender/<int:user_id>')
-def content_recommender(user_id: int):
+def recommender_route(user_id, recommendation_func):
     # walrus operator code donated by github.com/Not_Anonymous33
     if (topn := request.args.get('topn')) is None:
         topn = DEFAULT_TOPN
@@ -66,8 +64,23 @@ def content_recommender(user_id: int):
     items_to_ignore = list(
             watched_ratings[watched_ratings['user_id'] == user_id]['anime_id'])
 
-    recs = content_r.give_recommendation(user_id=user_id, items_df=anime_df, items_to_ignore=items_to_ignore, topn=topn, verbose=verbose)
+    recs = recommendation_func(user_id=user_id, items_df=anime_df, items_to_ignore=items_to_ignore, topn=topn, verbose=verbose)
     return jsonify({"user_id": user_id, "recommendations": recs.to_dict('records')})
+
+    
+@app.route('/content-recommender/<int:user_id>')
+def content_recommender(user_id: int):
+    return recommender_route(user_id, content_r.give_recommendations)
+
+
+@app.route('/collab-recommender/<int:user_id>')
+def collab_recommender(user_id: int):
+    return recommender_route(user_id, collab_r.give_recommendations)
+
+
+@app.route('/hybrid-recommender/<int:user_id>')
+def hybrid_recommender(user_id: int):
+    return recommender_route(user_id, hybrid_r.give_recommendations)
 
 
 if __name__ == '__main__':

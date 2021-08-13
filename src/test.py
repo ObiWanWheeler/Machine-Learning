@@ -31,13 +31,13 @@ if __name__ == '__main__':
         items_to_ignore = list(
             watched_ratings[watched_ratings['user_id'] == new_uid]['anime_id'])
 
-        # collab = CollabRecommender(
-        #     watched_ratings, user_id_column='user_id', item_id_column='anime_id', rating_column='rating')
-        # recs = collab.give_recommendations(
-        #     new_uid, anime_df, verbose=True, topn=20, items_to_ignore=items_to_ignore)
+        collab = CollabRecommender(
+            watched_ratings, user_id_column='user_id', item_id_column='anime_id', rating_column='rating')
+        recs = collab.give_recommendations(
+            new_uid, anime_df, verbose=True, topn=20, items_to_ignore=items_to_ignore)
 
-        # print(f'Collab based recommendations for user {new_uid}: \n')
-        # print(recs)
+        print(f'Collab based recommendations for user {new_uid}: \n')
+        print(recs)
 
         pb = ProfileBuilder(anime_df, anime_ids, 'user_id', 'anime_id',
                             'rating', watched_ratings, tfidf_matrix)
@@ -48,7 +48,7 @@ if __name__ == '__main__':
                            columns=['token', 'relevance']), '\n')
 
         cr = ContentRecommender(user_profiles, tfidf_matrix, anime_ids, 'anime_id')
-        recs = cr.give_recommendation(
+        recs = cr.give_recommendations(
             new_uid, anime_df, verbose=True, topn=20, items_to_ignore=items_to_ignore)
         print(f'Content based recommendations for user {new_uid}: \n')
         print(recs, '\n'*3)

@@ -21,7 +21,7 @@ class ContentRecommender:
             key=lambda x: -x[1],
         )
 
-    def give_recommendation(self, user_id, items_df=None, items_to_ignore=[], topn=10, verbose=False):
+    def give_recommendations(self, user_id, items_df=None, items_to_ignore=[], topn=10, verbose=False):
         similar_items = self.get_similar_items_ids(user_id, topn, len(items_to_ignore))
         similar_items_filtered = list(filter(lambda x: x[0] not in items_to_ignore, similar_items))[-topn:]
 
