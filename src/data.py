@@ -1,10 +1,9 @@
-import pandas as pd
 import psycopg2
 from psycopg2.extras import execute_values
 import config
 
 
-def get_connection(ini_file='database.ini', section='postgresql'):
+def get_connection(ini_file='src/database.ini', section='postgresql'):
     """Connects to Postgres server"""
     
     conn = None
