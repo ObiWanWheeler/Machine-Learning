@@ -9,7 +9,6 @@ def get_connection(ini_file='src/database.ini', section='postgresql'):
     conn = None
     try:
         params = config.config(ini_file, section)
-
         print('connecting to postgres')
         conn = psycopg2.connect(**params)
 

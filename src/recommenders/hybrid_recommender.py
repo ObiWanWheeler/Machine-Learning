@@ -16,8 +16,8 @@ class HybridRecommender():
 
     def give_recommendations(self, user_id, items_df, topn=10, verbose=False, items_to_ignore=[]):
         # top content based recommendations
-        cont_recs_df = self.cont_r.give_recommendation(
-            user_id, self.item_column, items_df, topn=1000, items_to_ignore=items_to_ignore).rename(columns={'relevance': 'relevance-Content'})
+        cont_recs_df = self.cont_r.give_recommendations(
+            user_id, items_df, topn=1000, items_to_ignore=items_to_ignore).rename(columns={'relevance': 'relevance-Content'})
 
         # top collab based recommendatoins
         collab_recs_df = self.collab_r.give_recommendations(

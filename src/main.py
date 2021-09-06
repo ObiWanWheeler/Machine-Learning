@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from flask import Flask, json, jsonify, request
+from flask import Flask, jsonify, request
 
 import data
 from recommenders.collaborative_recommender import CollabRecommender
@@ -21,14 +21,14 @@ cursor = connection.cursor()
 cursor.execute("SELECT * FROM rating")
 ratings = cursor.fetchall()
 ratings_df = pd.DataFrame(
-    ratings, columns=['user_id', 'anime_id', 'rating'])
+    ratings, columns=['user_id', 'anime_id', 'rating', 'createdAt', 'updatedAt'])
 ratings_df['rating'] = ratings_df['rating'].astype(np.int8)
 watched_ratings = ratings_df[ratings_df['rating'] != 0]
 
 cursor.execute("SELECT * FROM anime")
 anime = cursor.fetchall()
 anime_df = pd.DataFrame(anime, columns=[
-                        'anime_id', 'name', 'genre', 'type', 'episodes', 'rating', 'members'])
+                        'anime_id', 'name', 'genre', 'type', 'episodes', 'rating', 'members', 'updatedAt', 'createdAt'])
 
 anime_ids = anime_df['anime_id'].to_list()
 
@@ -55,6 +55,8 @@ def index():
 
 
 def recommender_route(user_id, recommendation_func):
+    if user_id not in ratings_df['user_id']:
+        return jsonify({"error": "this user has not rated any shows yet, so no recommendations can be made."}), 400
     topn = request.args.get('topn')
     if topn is None:
         topn = 10
@@ -82,6 +84,11 @@ def collab_recommender(user_id: int):
 @app.route('/hybrid-recommender/<int:user_id>')
 def hybrid_recommender(user_id: int):
     return recommender_route(user_id, hybrid_r.give_recommendations)
+
+
+@app.route('/user-added', methods=['POST'])
+def user_added():
+    pass
 
 
 if __name__ == '__main__':
