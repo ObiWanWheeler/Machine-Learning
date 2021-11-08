@@ -28,7 +28,7 @@ def create_tables(connection):
     commands = [
         """
         CREATE TABLE anime (
-            anime_id integer PRIMARY KEY,
+            "animeId" integer PRIMARY KEY,
             name varchar(100) NOT NULL,
             genre varchar(200) NOT NULL,
             type varchar(20) NOT NULL,
@@ -39,8 +39,8 @@ def create_tables(connection):
         """,
         """ 
         CREATE TABLE rating (
-            user_id integer NOT NULL,  
-            anime_id integer NOT NULL,
+            "userId" integer NOT NULL,  
+            "animeId" integer NOT NULL,
             rating integer NOT NULL CHECK (rating >= 0 AND rating <= 10),
             CONSTRAINT fk_anime
                 FOREIGN KEY(anime_id)
@@ -64,8 +64,18 @@ def create_tables(connection):
 def populate_tables(connection):
     cursor = connection.cursor()
     try:
-        execute_values(cursor, f'INSERT INTO anime (anime_id, name, genre, type, episodes, rating, members) VALUES %s;', anime.values.tolist())
-        execute_values(cursor, f'INSERT INTO rating (user_id, anime_id, rating) VALUES %s;', ratings.values.tolist())
+        execute_values(
+            cursor,
+            'INSERT INTO anime (anime_id, name, genre, type, episodes, rating, members) VALUES %s;',
+            anime.values.tolist(),
+        )
+
+        execute_values(
+            cursor,
+            'INSERT INTO rating (user_id, anime_id, rating) VALUES %s;',
+            ratings.values.tolist(),
+        )
+
     except (psycopg2.DatabaseError) as error:
         print(error)
 

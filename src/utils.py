@@ -41,12 +41,10 @@ def chunk_dataframe(df, chunk_size):
     return [df[i:i+chunk_size] for i in range(0, df.shape[0], chunk_size)]
 
 
-"""Adds anime title image objects and synposes to database records
-
-Keyword arguments:
-anime_df -- dataframe with the anime
-"""
 def add_anime_info(anime_df: DataFrame, db):
+    """
+    Adds anime title image objects and synposes to database records
+    """
     cur = db.cursor()
     print('start')
     for i, anime_name in enumerate(anime_df["name"]):
@@ -65,13 +63,12 @@ def add_anime_info(anime_df: DataFrame, db):
                 print(anime_name)
                 coverImage = anime_data["posterImage"]
 
-            coverImageString = str(coverImage).replace("'", '"').replace("None", "null")
-
-            
+            coverImageString = str(coverImage).replace(
+                "'", '"').replace("None", "null")
 
             cur.execute(f"UPDATE anime \
                             SET synopsis='{synopsis}', \
-                            titleImage=\'{coverImageString}\' \
+                            \"titleImage\"=\'{coverImageString}\' \
                             WHERE name='{anime_name}'")
             db.commit()
     print('done')

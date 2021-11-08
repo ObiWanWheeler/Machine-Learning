@@ -19,7 +19,6 @@ class ProfileBuilder:
         return self.tfidf_matrix[idx:idx + 1]
 
     def get_all_item_profiles(self, item_ids):
-
         item_profiles = [self.get_one_item_profile(id) for id in item_ids]
         item_profiles = scipy.sparse.vstack(item_profiles)
         return item_profiles

@@ -32,28 +32,11 @@ anime = cursor.fetchall()
 anime_df = pd.DataFrame(anime, columns=[
                         'anime_id', 'name', 'genre', 'type', 'episodes', 'rating', 'members', 'updatedAt', 'createdAt', 'synopsis', 'titleImage'])
 
-anime_ids = anime_df['anime_id'].to_list()
-
-
-add_anime_info(anime_df, connection)
-
 
 # initialising recommenders
-popularity_r = PopularityRecommender()
 
-tfidf_feature_names, tfidf_matrix = calculate_tfidf_matrix(anime_df)
-
-profile_builder = ProfileBuilder(anime_df, anime_ids, 'user_id', 'anime_id',
-                    'rating', watched_ratings, tfidf_matrix)
-user_profiles = profile_builder.build_all_user_profiles()
-
-collab_r = CollabRecommender(
-    watched_ratings, user_id_column='user_id', item_id_column='anime_id', rating_column='rating')
-
-content_r = ContentRecommender(user_profiles, tfidf_matrix, anime_ids, 'anime_id')
-
-hybrid_r = HybridRecommender(content_r, collab_r, 'anime_id', {
-    'content': 1.0, 'collab': DEFAULT_COLLAB_WEIGHT})
+content_r = ContentRecommender(anime_df, ratings_df)
+print(content_r.generate_recommendations(1, 10, True))
 
 
 @app.route('/')
