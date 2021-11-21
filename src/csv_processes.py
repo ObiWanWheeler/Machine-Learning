@@ -25,6 +25,8 @@ ratings = ratings[ratings['anime_id'].isin(anime['anime_id'])]
 # to transfer the anime data from csv into a local database in dev
 
 def create_tables(connection):
+    """Creates anime and rating tables"""
+    
     commands = [
         """
         CREATE TABLE anime (
@@ -47,10 +49,21 @@ def create_tables(connection):
                     REFERENCES anime(anime_id)
                     ON UPDATE CASCADE ON DELETE CASCADE
         );
+        """,
+        """
+        CREATE TABLE user (
+            id integer NOT NULL PRIMARY KEY,
+            username VARCHAR(50) NOT NULL CHECK (LENGTH(username) >= 3),
+            email VARCHAR(50) CHECK (email LIKE '%_@__%.__%'),
+            password VARCHAR(50)
+                CHECK (LENGTH(password) >= 4)
+                AND REGEXP_LIKE(password, '(?=\d)(?=^[a-zA-Z0-9]*$')(?=[A-Z])(?=[a-z])')
+        )
         """
     ]
     
     cursor = connection.cursor()
+    # trys to create the tables, if an error occurs it prints it and carries on.
     for command in commands:
         try:
             cursor.execute(command)
@@ -58,18 +71,23 @@ def create_tables(connection):
         except (psycopg2.DatabaseError, Exception) as error:
             print(error)
             continue
+    # close database cursor to save dat memory
     cursor.close()
     
 
 def populate_tables(connection):
+    """Transfers data from csv's into database tables"""
+    
     cursor = connection.cursor()
+    # here we use the psycopg python library to simplify executing the same SQL statement many times over
     try:
+        # add all of the anime loaded from csv into the anime table
         execute_values(
             cursor,
             'INSERT INTO anime (anime_id, name, genre, type, episodes, rating, members) VALUES %s;',
             anime.values.tolist(),
         )
-
+        # add all of the ratings loaded from csv into the rating table
         execute_values(
             cursor,
             'INSERT INTO rating (user_id, anime_id, rating) VALUES %s;',
@@ -79,6 +97,7 @@ def populate_tables(connection):
     except (psycopg2.DatabaseError) as error:
         print(error)
 
+    # save the changes into the database
     connection.commit()
     cursor.close()
 
