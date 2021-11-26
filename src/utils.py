@@ -1,7 +1,9 @@
+import logging
 import numpy as np
 from numpy.core.fromnumeric import mean
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
+from scipy.sparse.linalg.eigen.arpack.arpack import svds
 from sklearn.feature_extraction.text import TfidfVectorizer
 import requests
 import scipy
@@ -88,15 +90,6 @@ def add_anime_info(anime_df: DataFrame, db):
             db.commit()
     print('done')
 
-def rank_reduce_matrix(matrix: np.ndarray, new_rank):
-    U, S, V_T = find_svd(matrix)
-
-    print("RANK REDUCING U, S AND V_T")
-    U_rank_reduced = U[:, :new_rank]
-    S_rank_reduced = S[:new_rank]
-    V_rank_reduced = V_T[:new_rank, :]
-
-    return U_rank_reduced @ np.diag(S_rank_reduced) @ V_rank_reduced
 
 def find_svd(matrix: np.ndarray) -> np.ndarray:
     """finds the singular value decomposition of a matrix
@@ -121,6 +114,7 @@ def find_svd(matrix: np.ndarray) -> np.ndarray:
     # calculate right singular vectors
     _, right_singular_vectors = np.linalg.eigh(right_transpose)
     # calcualte singular values
+    logging.debug(eigen_values)
     singular_values = np.sqrt(eigen_values)
     
     return right_singular_vectors, singular_values, left_singular_vectors.T
@@ -156,6 +150,11 @@ def rank_reduce_matrix(matrix, k):
     right_factor = singular_vals_rank_reduced @ right_T_rank_reduced
 
     return left_factor, right_factor
+
+def rank_reduce_matrix_scipy(matrix, k):
+    u, sigma, vt = svds(matrix, k=k)
+    sigma = np.diag(sigma)
+    return (u @ sigma).T, vt
 
 def calc_mean_squared_error(prediction, actual):
     prediction = prediction[actual.nonzero()].flatten()

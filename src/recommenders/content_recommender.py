@@ -1,15 +1,22 @@
+import logging
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 from recommenders.recommender import Recommender
 import numpy as np
-from operator import itemgetter
-
+import functools
+import operator
 
 class ContentRecommender(Recommender):
 
     def __init__(self, shows: pd.DataFrame, ratings: pd.DataFrame):
         super().__init__(shows, ratings)
+        self.genre_frequencies = self.calculate_genre_frequencies()
         self.show_embeddings = self.calculate_item_embeddings()
+
+    def calculate_genre_frequencies(self) -> dict:
+        genres_non_distinct = functools.reduce(operator.concat,self.shows["genre"].apply(lambda row: row.split(', ')))
+        genres_distinct = set(genres_non_distinct)
+        return {genre: genres_non_distinct.count(genre) for genre in genres_distinct}
 
     def calculate_user_embedding(self, user_id) -> dict:
         """Generates the embedding for the user with id = user_id.\n
@@ -17,7 +24,7 @@ class ContentRecommender(Recommender):
 
         Keyword arguments:\n
         user_id -- the id of the user who's embedding you want to generate
-        Return: None
+        Return: Calculated user embedding
         """
 
         embedding = {}
@@ -39,7 +46,11 @@ class ContentRecommender(Recommender):
                     embedding[genre] = rating[rating_tuple_rating_index] 
                 else: # increment this genres score proportional to how much the user liked the show it was on
                     embedding[genre] += rating[rating_tuple_rating_index]
-        self.user_embeddings[user_id] = embedding
+        # normalise embedding based on genre frequencies.
+        normalized_embedding = {genre: embedding[genre]/(0.5 * self.genre_frequencies[genre]) for genre in embedding.keys() & self.genre_frequencies}
+        
+        # store the newly calculated user embedding so it doesn't need to be calculated again.
+        self.user_embeddings[user_id] = normalized_embedding
         return embedding
 
     def calculate_item_embeddings(self) -> dict:
@@ -71,11 +82,8 @@ class ContentRecommender(Recommender):
 
         embedding_scores: dict = {}
 
-        if user_id in self.user_embeddings:
-            # This user's embedding has already been generated and stored, so why bother generating it again?
-            user_embedding = self.user_embeddings[user_id]
-        else:
-            user_embedding = self.calculate_user_embedding(user_id)
+        # retrieve this user's embedding
+        user_embedding = self.get_user_embedding(user_id)
 
         # iterate through shows
         for show_id, show_embedding in self.show_embeddings.items():
@@ -102,11 +110,21 @@ class ContentRecommender(Recommender):
         total_score = 0
         for genre, score in show_embedding.items():
             try:
-                # believe it or not, numpy actually multiplies quicker than just a * b
-                total_score += np.multiply(user_embedding[genre], score)
+                normalized_score = score / (0.1 * self.genre_frequencies[genre])
+                total_score += user_embedding[genre] * normalized_score
             except(KeyError):  # user didn't have this genre in their embedding, unlikely but plausible
                 pass
+        # penalty that prevents shows with loads of genres being recommended too highly
+        total_score /= (len(user_embedding) / len(show_embedding))
         return total_score
+
+    def get_user_embedding(self, user_id):
+        return (
+            self.user_embeddings[user_id]
+            # This user's embedding has already been generated and stored, so why bother generating it again?
+            if user_id in self.user_embeddings 
+            else self.calculate_user_embedding(user_id)
+        )
 
     # overriden
     def generate_recommendations(self, user_id: int, recommendation_count: int = 10, verbose: bool = False, items_to_ignore=[]) -> pd.DataFrame:

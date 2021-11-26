@@ -18,16 +18,18 @@ class HybridRecommender(Recommender):
         cont_recs_df = self.cont_r.generate_recommendations(
             user_id, len(self.shows), verbose, items_to_ignore)
 
-        # top collab based recommendatoins
+        # top collab based recommendations
         collab_recs_df = self.collab_r.generate_recommendations(
             user_id, len(self.shows), verbose, items_to_ignore)
 
-        # merge results into one frame
+        # merge results into one frame...
         joint_recs_df = pd.merge(left=cont_recs_df, right=collab_recs_df,
                                  how='outer', left_on="anime_id", right_on="anime_id").fillna(0.0)
-        joint_recs_df['joint_relevance_score'] = 10 * ((joint_recs_df['relevance_score'] / max(
-            joint_recs_df["relevance_score"])) * self.weights['content']) + (joint_recs_df['predicted_rating'] * self.weights['collab'])
+        # calculate score based on weightings specified...
+        normalized_relevance_scores = 10 * (joint_recs_df['relevance_score'] / max(joint_recs_df["relevance_score"]))
+        joint_recs_df['joint_relevance_score'] = (normalized_relevance_scores * self.weights['content']) + (joint_recs_df['predicted_rating'] * self.weights['collab'])
 
+        # and sort 
         top_shows = joint_recs_df.sort_values(by='joint_relevance_score', ascending=False)[
             :min(recommendation_count, len(joint_recs_df))]
 

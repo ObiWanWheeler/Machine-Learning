@@ -6,7 +6,7 @@ class Recommender(ABC):
     def __init__(self, shows: pd.DataFrame, ratings: pd.DataFrame):
         self.shows: pd.DataFrame = shows
         self.ratings: pd.DataFrame = ratings
-        self.item_embeddings: dict = {}
+        self.show_embeddings: dict = {}
         self.user_embeddings: dict = {}
     
     @abstractmethod
