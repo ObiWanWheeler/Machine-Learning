@@ -1,5 +1,4 @@
 import psycopg2
-from psycopg2.extras import execute_values
 import config
 
 
@@ -12,6 +11,7 @@ def get_connection(ini_file='./database.ini', section='postgresql'):
     
     conn = None
     try:
+        # extracts connection parameters from ini file
         params = config.config(ini_file, section)
         print('connecting to postgres')
         conn = psycopg2.connect(**params)
