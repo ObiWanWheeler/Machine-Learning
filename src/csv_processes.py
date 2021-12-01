@@ -11,7 +11,7 @@ anime = pd.read_csv("./data/anime/anime.csv", low_memory=False)
 ratings = pd.read_csv("./data/anime/rating.csv", low_memory=False)
 
 # data cleaning
-anime['genre'].fillna('Unkown', inplace=True)
+anime['genre'].fillna('Unknown', inplace=True)
 anime['type'].fillna('Unknown', inplace=True)
 anime['name'].dropna(inplace=True)
 anime['episodes'].replace('Unknown', -1, inplace=True)
@@ -26,7 +26,7 @@ ratings = ratings[ratings['anime_id'].isin(anime['anime_id'])]
 
 def create_tables(connection):
     """Creates anime and rating tables"""
-    
+
     commands = [
         """
         CREATE TABLE anime (
@@ -57,11 +57,11 @@ def create_tables(connection):
             email VARCHAR(50) CHECK (email LIKE '%_@__%.__%'),
             password VARCHAR(50)
                 CHECK (LENGTH(password) >= 4)
-                AND REGEXP_LIKE(password, '(?=\d)(?=^[a-zA-Z0-9]*$')(?=[A-Z])(?=[a-z])')
+                AND REGEXP_LIKE(password, '(?=\d)(?=^[a-zA-Z0-9]*$)(?=[A-Z])(?=[a-z])')
         )
         """
     ]
-    
+
     cursor = connection.cursor()
     # trys to create the tables, if an error occurs it prints it and carries on.
     for command in commands:
@@ -73,11 +73,11 @@ def create_tables(connection):
             continue
     # close database cursor to save dat memory
     cursor.close()
-    
+
 
 def populate_tables(connection):
-    """Transfers data from csv's into database tables"""
-    
+    """Transfers data from csvs into database tables"""
+
     cursor = connection.cursor()
     # here we use the psycopg python library to simplify executing the same SQL statement many times over
     try:
@@ -94,13 +94,12 @@ def populate_tables(connection):
             ratings.values.tolist(),
         )
 
-    except (psycopg2.DatabaseError) as error:
+    except psycopg2.DatabaseError as error:
         print(error)
 
     # save the changes into the database
     connection.commit()
     cursor.close()
-
 
 # connection = data.get_connection()
 # create_tables(connection)
