@@ -1,5 +1,5 @@
 import logging
-from data import get_connection_psycopg, DatabaseCustomORM, PsycopCursor, fetch_feedback_data, fetch_anime_data
+from data import get_connection_psycopg, DatabaseCustomORM, PsycopCursor
 from src.flask_app import RecommenderApp
 
 logging_format = "[%(levelname)s] %(asctime)s - %(message)s"

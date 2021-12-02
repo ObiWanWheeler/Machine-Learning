@@ -16,8 +16,10 @@ class HybridRecommender(Recommender):
         self.weights = weights
 
     def generate_recommendations(self, user_id: int, recommendation_count: int = 10, verbose: bool = False,
-                                 items_to_ignore=[]) -> pd.DataFrame:
+                                 items_to_ignore=None) -> pd.DataFrame:
         # top content based recommendations
+        if items_to_ignore is None:
+            items_to_ignore = []
         cont_recs_df = self.cont_r.generate_recommendations(
             user_id, len(self.shows), verbose, items_to_ignore)
 
