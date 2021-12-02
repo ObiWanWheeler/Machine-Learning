@@ -1,4 +1,3 @@
-import data
 import pandas as pd
 import psycopg2
 from psycopg2.extras import execute_values
@@ -7,8 +6,8 @@ from psycopg2.extras import execute_values
 # requires postgres be installed on system
 
 # data sets
-anime = pd.read_csv("./data/anime/anime.csv", low_memory=False)
-ratings = pd.read_csv("./data/anime/rating.csv", low_memory=False)
+anime = pd.read_csv("../data/anime/anime.csv", low_memory=False)
+ratings = pd.read_csv("../data/anime/rating.csv", low_memory=False)
 
 # data cleaning
 anime['genre'].fillna('Unknown', inplace=True)
@@ -51,7 +50,7 @@ def create_tables(connection):
         );
         """,
         """
-        CREATE TABLE user (
+        CREATE TABLE "user" (
             id integer NOT NULL PRIMARY KEY,
             username VARCHAR(50) NOT NULL CHECK (LENGTH(username) >= 3),
             email VARCHAR(50) CHECK (email LIKE '%_@__%.__%'),
@@ -84,13 +83,13 @@ def populate_tables(connection):
         # add all of the anime loaded from csv into the anime table
         execute_values(
             cursor,
-            'INSERT INTO anime (anime_id, name, genre, type, episodes, rating, members) VALUES %s;',
+            'INSERT INTO anime ("animeId", name, genre, type, episodes, rating, members) VALUES %s;',
             anime.values.tolist(),
         )
         # add all of the ratings loaded from csv into the rating table
         execute_values(
             cursor,
-            'INSERT INTO rating (user_id, anime_id, rating) VALUES %s;',
+            'INSERT INTO rating ("userId", "animeId", rating) VALUES %s',
             ratings.values.tolist(),
         )
 

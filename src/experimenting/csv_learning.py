@@ -1,4 +1,4 @@
-import csv_processes
+import src.database.csv_processes
 
 
 def input_user_ratings(anime, id):
@@ -13,10 +13,10 @@ def input_user_ratings(anime, id):
 
     return user_ratings
 
+
 # used for data in csv format, which is no longer how things go
 @DeprecationWarning
 def learn_new_user_preferences_abreviated_csv():
-    
     abrev_anime = csv_processes.anime[csv_processes.anime['anime_id'] <= 10]
     abrev_ratings = csv_processes.feedback[csv_processes.feedback['user_id'] <= 10]
 
@@ -35,7 +35,7 @@ def learn_new_user_preferences_abreviated_csv():
 def learn_new_user_preferences_csv():
     new_user_id = csv_processes.feedback['user_id'].max() + 1
     user_ratings = input_user_ratings(csv_processes.anime, new_user_id)
-        
+
     ratings = csv_processes.feedback.append(user_ratings, ignore_index=True)
     ratings = ratings.to_csv('./data/anime/rating.csv', index=False)
 

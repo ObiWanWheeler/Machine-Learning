@@ -1,6 +1,6 @@
-from myconstants import PROD
-from recommenders.recommender import Recommender
-from utils import calc_mean_squared_error, rank_reduce_matrix_scipy
+from src.myconstants import PROD
+from src.recommenders.recommender import Recommender
+from src.utils import calc_mean_squared_error, rank_reduce_matrix_scipy
 import numpy as np
 import pandas as pd
 

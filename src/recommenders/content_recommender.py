@@ -1,5 +1,5 @@
 import pandas as pd
-from recommenders.recommender import Recommender
+from src.recommenders.recommender import Recommender
 import numpy as np
 import functools
 import operator
