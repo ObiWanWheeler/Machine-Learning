@@ -93,9 +93,7 @@ def fetch_feedback_data(db) -> pd.DataFrame:
     ratings_df = pd.DataFrame(
         ratings, columns=['user_id', 'anime_id', 'rating', 'createdAt', 'updatedAt'])
     ratings_df['rating'] = ratings_df['rating'].astype(np.int8)
-    watched_ratings = ratings_df[ratings_df['rating'] != 0]
-
-    return watched_ratings
+    return ratings_df[ratings_df['rating'] != 0]
 
 
 def fetch_anime_data(db) -> pd.DataFrame:

@@ -85,18 +85,15 @@ class ContentRecommender(Recommender):
         Return: dictionary of form show_id: score, highest being most relevant
         """
 
-        embedding_scores: dict = {}
-
         # retrieve this user's embedding
         user_embedding = self.get_user_embedding(user_id)
 
-        # iterate through shows
-        for show_id, show_embedding in self.show_embeddings.items():
-            # dot product user and show embedding to produce score for this show
-
-            embedding_scores[show_id] = self.calculate_similarity_score(
-                user_embedding, show_embedding)
-        return embedding_scores
+        return {
+            show_id: self.calculate_similarity_score(
+                user_embedding, show_embedding
+            )
+            for show_id, show_embedding in self.show_embeddings.items()
+        }
 
     def calculate_similarity_score(self, user_embedding, show_embedding) -> int:
         """Calculates similarity between user embedding and show embedding,
