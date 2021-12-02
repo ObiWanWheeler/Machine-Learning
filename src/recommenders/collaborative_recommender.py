@@ -130,4 +130,5 @@ class CollabRecommender(Recommender):
         if verbose:  # add all other show data if requested
             top_shows = top_shows.merge(self.shows[self.shows["anime_id"].isin(
                 filtered_recs.keys())], how="left", left_on="anime_id", right_on="anime_id")
+        top_shows.reset_index(level=0, inplace=True)
         return top_shows
