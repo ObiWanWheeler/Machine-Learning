@@ -1,8 +1,9 @@
-from src.myconstants import PROD
-from src.recommenders.recommender import Recommender
-from src.utils import calc_mean_squared_error, rank_reduce_matrix_scipy
 import numpy as np
 import pandas as pd
+
+from src.myconstants import PROD
+from src.recommenders.recommender import Recommender
+from src.utils import calc_mean_squared_error
 
 
 class CollabRecommender(Recommender):
@@ -17,8 +18,11 @@ class CollabRecommender(Recommender):
 
         # calculate predictions
         # for now, this only needs to happen once: on startup.
+        self.predictions_df = self.init_prediction_df()
+
+    def init_prediction_df(self):
         predictions_matrix = self.calc_sgd_predictions()
-        self.predictions_df = pd.DataFrame(
+        return pd.DataFrame(
             predictions_matrix, index=self.feedback_df.index, columns=self.feedback_df.columns)
 
     @staticmethod
@@ -43,11 +47,11 @@ class CollabRecommender(Recommender):
         Returns
         ---------
         tuple containing all the calculated statistics:
-            mean squared error, error stat 2, error stat 3, ...
+            root mean squared error, error stat 2, error stat 3, ...
         """
         return calc_mean_squared_error(predictions[actual_data.nonzero()], actual_data[actual_data.nonzero()])
 
-    def calc_sgd_predictions(self, max_epoch_count=1000, latent_feature_count=75, alpha=0.002, gamma=0.4,
+    def calc_sgd_predictions(self, max_epoch_count=1000, latent_feature_count=75, alpha=0.01, gamma=0.4,
                              accepted_deviation=2.5):
         """Calculates prediction matrix by using matrix factorisation and stochastic gradient descent
 
@@ -60,7 +64,7 @@ class CollabRecommender(Recommender):
             The lower this is the faster to execute
         alpha: int
             'learning rate'. Size of steps to take in gradient descent.
-            The higher this is the slower to execute 
+            The lower this is the slower to execute
             but the more accurate results that can eventually be obtained.
         gamma: int
             regularization parameter, should be in the range 0.1 - 1.0. Higher values restrict
@@ -79,12 +83,12 @@ class CollabRecommender(Recommender):
 
         # work with numpy arrays instead of dfs
         # demean data to help mitigate any user bias
-        feedback_matrix = self.feedback_df.to_numpy()
-        user_row_means = feedback_matrix.mean(axis=1, keepdims=True)
-        feedback_matrix_normalised = np.subtract(feedback_matrix, user_row_means)
+        feedback_matrix = self.feedback_df.fillna(0.0).to_numpy()
 
-        # find's low rank approximation to feedback matrix
-        user_lfs, item_lfs = rank_reduce_matrix_scipy(feedback_matrix, latent_feature_count)
+        m, n = feedback_matrix.shape
+        user_lfs = np.random.rand(latent_feature_count, m)
+        item_lfs = np.random.rand(latent_feature_count, n)
+
         # the user - rating pairs of ratings that have actually been left
         user, items = feedback_matrix.nonzero()
 
@@ -95,22 +99,23 @@ class CollabRecommender(Recommender):
                 self.on_epoch_start(epoch)  # development logging stuff
             predictions = user_lfs.T @ item_lfs  # make an approximation
             # check how good the approximation is
-            mse = self.calc_validity_stats(predictions, feedback_matrix_normalised)
+            mse = self.calc_validity_stats(predictions, feedback_matrix)
             if not PROD:
                 print("MSE:", mse)
 
             # check if the approximation is 'good enough'
             if mse < accepted_deviation:
-                print(f"broke after {epoch + 2} epochs")
+                print(f"broke after {epoch + 1} epochs")
                 break
 
             # if not, iterate gradient descent again and improve our approximation
             for u, i in zip(user, items):
-                differences = feedback_matrix_normalised[u, i] - user_lfs[:, u].T @ item_lfs[:, i]
-                user_lfs[:, u] += 2 * alpha * (differences * item_lfs[:, i] - gamma * user_lfs[:, u])
-                item_lfs[:, i] += 2 * alpha * (differences * user_lfs[:, u] - gamma * item_lfs[:, i])
+                dot = np.dot(user_lfs[:, u].T, item_lfs[:, i])
+                difference = feedback_matrix[u, i] - dot
+                user_lfs[:, u] += 2 * alpha * (difference * item_lfs[:, i] - gamma * user_lfs[:, u])
+                item_lfs[:, i] += 2 * alpha * (difference * user_lfs[:, u] - gamma * item_lfs[:, i])
 
-        return np.add(predictions, user_row_means)
+        return predictions
 
     # overridden
     def generate_recommendations(self, user_id: int, recommendation_count: int = 10, verbose: bool = False,
@@ -132,3 +137,9 @@ class CollabRecommender(Recommender):
                 filtered_recs.keys())], how="left", left_on="anime_id", right_on="anime_id")
         top_shows.reset_index(level=0, inplace=True)
         return top_shows
+
+    def refresh(self):
+        self.predictions_df = self.init_prediction_df()
+
+    def get_score_column_name(self) -> str:
+        return "predicted_rating"

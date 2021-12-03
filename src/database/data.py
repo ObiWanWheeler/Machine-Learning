@@ -1,8 +1,10 @@
+from abc import ABC, abstractmethod
+
 import numpy as np
 import pandas as pd
 import psycopg2
-import config
-from abc import ABC, abstractmethod
+
+import src.database.config as config
 
 
 def get_connection_psycopg(ini_file='./database.ini', section='postgresql'):

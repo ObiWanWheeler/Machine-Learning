@@ -1,8 +1,10 @@
-import pandas as pd
-from src.recommenders.recommender import Recommender
-import numpy as np
 import functools
 import operator
+
+import numpy as np
+import pandas as pd
+
+from src.recommenders.recommender import Recommender
 
 
 class ContentRecommender(Recommender):
@@ -155,3 +157,9 @@ class ContentRecommender(Recommender):
                 filtered_scores.keys())], how="left", left_on="anime_id", right_on="anime_id")
 
         return top_shows
+
+    def refresh(self):
+        self.user_embeddings.clear()
+
+    def get_score_column_name(self) -> str:
+        return "relevance_score"

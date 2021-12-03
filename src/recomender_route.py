@@ -17,7 +17,7 @@ def recommender_route(user_id: int, recommender: Recommender):
     if verbose is None:
         verbose = False
     else:
-        verbose = bool(verbose)
+        verbose = verbose.lower() in ["true", "t", "yes", "y"]
 
     items_to_ignore = list(
         recommender.ratings[recommender.ratings['user_id'] == user_id]['anime_id'])

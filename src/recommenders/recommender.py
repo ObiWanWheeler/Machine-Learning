@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 import pandas as pd
 
 
@@ -19,8 +20,17 @@ class Recommender(ABC):
         Parameters
         ----------
         user_id -- the id of the user's who recommendations you want to find\n
-        recommendation_count -- the number of recommendations you want to be given\n
+        recommendation_count -- the number of recommendations you want to be given.
+        Note, -1 will return all recommendations
         verbose -- if False only item ids returned, if True, entire item is returned\n
         items_to_ignore -- list containing item ids of items that shouldn't be recommended\n
         """
+        pass
+
+    @abstractmethod
+    def refresh(self):
+        pass
+
+    @abstractmethod
+    def get_score_column_name(self) -> str:
         pass

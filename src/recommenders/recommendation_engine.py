@@ -1,25 +1,34 @@
-import pandas as pd
+import logging
+from typing import Dict
 
-from src.recommenders.collaborative_recommender import CollabRecommender
-from src.recommenders.content_recommender import ContentRecommender
-from src.recommenders.hybrid_recommender import HybridRecommender
-from src.recommenders.popularity_recommender import PopularityRecommender
+from src.exceptions import DimensionError, DataMatchError
+from src.recommenders.recommender import Recommender
 
 
 class RecommendationEngine:
 
-    def __init__(self, items_df, ratings_df):
-        self.items = items_df
-        self.feedback = ratings_df
+    def __init__(self, items, feedback, recommenders: Dict[str, Recommender]):
 
-        self.popularity_r = PopularityRecommender()
-        self.content_r = ContentRecommender(items_df, ratings_df)
-        self.collab_r = CollabRecommender(items_df, ratings_df)
-        self.hybrid_r = HybridRecommender(items_df, ratings_df, self.content_r, self.collab_r)
+        if len(recommenders) <= 1:
+            raise DimensionError("Must provide at least 2 recommenders")
+
+        for recommender in recommenders.values():
+            if not (recommender.shows.equals(items) and recommender.ratings.equals(feedback)):
+                raise DataMatchError("All recommenders must be trained on the passed "
+                                     "items / feedback dataset to "
+                                     "be used in conjunction in a hybrid recommender")
+
+        self.recommenders = recommenders
 
     def refresh_recommenders(self, updated_ratings):
-        self.feedback = updated_ratings.copy()
-        self.content_r.calculate_item_embeddings()
-        predictions_matrix = self.collab_r.calc_sgd_predictions()
-        self.collab_r.predictions_df = pd.DataFrame(
-            predictions_matrix, index=self.feedback.index, columns=self.feedback.columns)
+        for recommender in self.recommenders.values():
+            recommender.ratings = updated_ratings
+            recommender.refresh()
+
+    def get_recommender(self, recommender_name):
+        try:
+            recommender = self.recommenders[recommender_name]
+        except KeyError:
+            logging.error(f"Requested recommender {recommender_name} does not exist in this engine!")
+        else:
+            return recommender
