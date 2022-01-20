@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+from flask import request
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
 from scipy.sparse.linalg.eigen.arpack.arpack import svds
@@ -25,7 +26,7 @@ def weight_rating(column: Series, min_vote_count, overall_vote_average):
     rating = column['rating']
     # IMDB weighting formula
     return vote_count / (vote_count + min_vote_count) * rating + min_vote_count / (
-                vote_count + min_vote_count) * overall_vote_average
+            vote_count + min_vote_count) * overall_vote_average
 
 
 def chunk_dataframe(df, chunk_size):
@@ -150,3 +151,17 @@ def calc_mean_squared_error(prediction, actual):
     prediction = prediction[actual.nonzero()].flatten()
     actual = actual[actual.nonzero()].flatten()
     return mean_squared_error(actual, prediction)
+
+
+def get_query_vars():
+    recommendation_count = request.args.get('recommendationCount')
+    if recommendation_count is None:
+        recommendation_count = 10
+    else:
+        recommendation_count = int(recommendation_count)
+    verbose = request.args.get('verbose')
+    if verbose is None:
+        verbose = False
+    else:
+        verbose = verbose.lower() in ["true", "t", "yes", "y"]
+    return recommendation_count, verbose

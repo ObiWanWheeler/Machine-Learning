@@ -69,7 +69,21 @@ class PsycopCursor(DBCursor):
         self.cursor.close()
 
 
-class DatabaseCustomORM:
+class DatabaseORM(ABC):
+    @abstractmethod
+    def fetch_all(self, table_name: str):
+        pass
+
+    @abstractmethod
+    def fetch_n(self, table_name: str, n: int):
+        pass
+
+    @abstractmethod
+    def fetch_by_condition(self, table_name: str, condition: str):
+        pass
+
+
+class DatabaseCustomORM(DatabaseORM):
 
     def __init__(self, db_cursor: DBCursor):
         self.cursor = db_cursor
@@ -90,7 +104,7 @@ class DatabaseCustomORM:
         self.cursor.close()
 
 
-def fetch_feedback_data(db) -> pd.DataFrame:
+def fetch_feedback_data(db: DatabaseORM) -> pd.DataFrame:
     ratings = db.fetch_all("rating")
     ratings_df = pd.DataFrame(
         ratings, columns=['user_id', 'anime_id', 'rating', 'createdAt', 'updatedAt'])
@@ -100,11 +114,22 @@ def fetch_feedback_data(db) -> pd.DataFrame:
     return watched_ratings
 
 
-def fetch_anime_data(db) -> pd.DataFrame:
+def fetch_one_feedback_data(db: DatabaseORM, user_id: int) -> pd.DataFrame:
+    ratings = db.fetch_by_condition("rating", f'"userId"={user_id}')
+    ratings_df = pd.DataFrame(
+        ratings, columns=['user_id', 'anime_id', 'rating', 'createdAt', 'updatedAt'])
+    ratings_df['rating'] = ratings_df['rating'].astype(np.int8)
+    watched_ratings = ratings_df[ratings_df['rating'] != 0]
+
+    return watched_ratings
+
+
+def fetch_anime_data(db: DatabaseORM) -> pd.DataFrame:
     anime = db.fetch_all("anime")
     anime_df = pd.DataFrame(anime, columns=[
         'anime_id', 'name', 'genre', 'type', 'episodes', 'rating', 'members', 'updatedAt', 'createdAt', 'synopsis',
         'titleImage'])
+    # bad practice to have this here, but this is a school project, so can't be having an "NSFW" flag really.
     anime_df = anime_df[~anime_df["genre"].str.contains("Hentai")]
     anime_df.dropna(inplace=True)
 

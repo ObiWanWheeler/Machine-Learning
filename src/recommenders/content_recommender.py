@@ -46,21 +46,16 @@ class ContentRecommender(Recommender):
         normalized_embedding = {genre: embedding[genre] / (0.5 * self.genre_frequencies[genre])
                                 for genre in embedding.keys() & self.genre_frequencies}
 
-        # store the newly calculated user embedding so it doesn't need to be calculated again.
-        self.user_embeddings[user_id] = normalized_embedding
-        return embedding
+        return normalized_embedding
 
     def __compare_embeddings(self, user_id) -> dict:
         """Compares user and show embeddings to find show most similar to user.
 
         Return: dictionary of form show_id: score, highest being most relevant
         """
-
         embedding_scores: dict = {}
-
         # retrieve this user's embedding
         user_embedding = self.__get_user_embedding(user_id)
-
         # iterate through shows
         for show_id, show_embedding in self.show_embeddings.items():
             # dot product user and show embedding to produce score for this show
@@ -70,12 +65,14 @@ class ContentRecommender(Recommender):
         return embedding_scores
 
     def __get_user_embedding(self, user_id):
-        return (
-            self.user_embeddings[user_id]
+        if user_id in self.user_embeddings:
             # This user's embedding has already been generated and stored, so why bother generating it again?
-            if user_id in self.user_embeddings
-            else self.__calculate_user_embedding(user_id)
-        )
+            return self.user_embeddings[user_id]
+        else:
+            user_embedding = self.__calculate_user_embedding(user_id)
+            # store the newly calculated user embedding so it doesn't need to be calculated again.
+            self.user_embeddings[user_id] = user_embedding
+            return user_embedding
 
     # overridden
     def generate_recommendations(self, user_id: int, recommendation_count: int = 10, verbose: bool = False,

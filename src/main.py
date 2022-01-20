@@ -15,6 +15,6 @@ db = DatabaseCustomORM(cursor)
 app = RecommenderApp(__name__, db)
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=False)
 
 connection.close()

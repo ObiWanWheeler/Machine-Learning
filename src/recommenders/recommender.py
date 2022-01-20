@@ -14,7 +14,7 @@ class Recommender(ABC):
     @abstractmethod
     def generate_recommendations(self, user_id: int, recommendation_count: int = 10, verbose: bool = False,
                                  items_to_ignore=None) -> pd.DataFrame:
-        """abstract method to be implemented in subclasses. 
+        """
         For a given user, finds their recommendations using the implemented algorithm\n
         
         Parameters
@@ -29,8 +29,14 @@ class Recommender(ABC):
 
     @abstractmethod
     def refresh(self):
+        """
+        Resets the recommender to it's base, untrained state. To be called when new ratings are added.
+        """
         pass
 
     @abstractmethod
     def get_score_column_name(self) -> str:
+        """
+        Returns the name of the DataFrame column that contains each item's score
+        """
         pass
