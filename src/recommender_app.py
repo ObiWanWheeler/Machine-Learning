@@ -50,12 +50,10 @@ class RecommenderApp(FlaskApp):
         old_user_ratings = self.feedback_df[self.feedback_df["user_id"] == user_id]
         new_user_ratings = fetch_one_feedback_data(self.db, user_id)
 
-        old_user_ratings.reset_index(inplace=True, drop=True)
-        new_user_ratings.reset_index(inplace=True, drop=True)
-
-        if not old_user_ratings.equals(new_user_ratings):
+        if old_user_ratings["rating"].sum() != new_user_ratings["rating"].sum():
             logging.debug("New ratings detected, Refreshing recommenders")
-            self.engine.refresh_recommenders(new_user_ratings)
+            updated_ratings = fetch_feedback_data(self.db)
+            self.engine.refresh_recommenders(updated_ratings)
 
     def index(self):
         return "Welcome to the film recommender API"
@@ -74,7 +72,6 @@ class RecommenderApp(FlaskApp):
 
     def popularity_recommender_route(self):
         recommendation_count, verbose = get_query_vars()
-
         filtered_shows = None
         if query := request.args.get('query'):
             regex_string = query.replace(',', '|')

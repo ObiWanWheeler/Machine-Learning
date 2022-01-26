@@ -6,8 +6,11 @@ from psycopg2.extras import execute_values
 # requires postgres be installed on system
 
 # data sets
-anime = pd.read_csv("../data/anime/anime.csv", low_memory=False)
-ratings = pd.read_csv("../data/anime/rating.csv", low_memory=False)
+from src.database import data
+from src.database.data import get_connection_psycopg
+
+anime = pd.read_csv("data/anime/anime.csv", low_memory=False)
+ratings = pd.read_csv("data/anime/rating.csv", low_memory=False)
 
 # data cleaning
 anime['genre'].fillna('Unknown', inplace=True)
@@ -16,6 +19,7 @@ anime['name'].dropna(inplace=True)
 anime['episodes'].replace('Unknown', -1, inplace=True)
 anime['episodes'].fillna(-2, inplace=True)
 anime['rating'].fillna(0.0, inplace=True)
+
 
 ratings = ratings[ratings['anime_id'].isin(anime['anime_id'])]
 
@@ -100,6 +104,17 @@ def populate_tables(connection):
     connection.commit()
     cursor.close()
 
-# connection = data.get_connection()
-# create_tables(connection)
-# populate_tables(connection)
+
+def reset_anime_table(connection):
+    cursor = connection.cursor()
+    try:
+
+        for a in anime.to_dict('records'):
+            cursor.execute(f'UPDATE anime SET rating={a["rating"]} WHERE "animeId"={a["anime_id"]}')
+
+    except psycopg2.DatabaseError as error:
+        print(error)
+
+    # save the changes into the database
+    connection.commit()
+    cursor.close()
