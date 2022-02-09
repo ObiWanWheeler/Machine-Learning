@@ -18,3 +18,4 @@ class FlaskApp(ABC):
     @abstractmethod
     def add_all_endpoints(self):
         pass
+
